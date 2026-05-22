@@ -1,0 +1,9 @@
+{
+  "_comment": "Copy this file into your job folder as template.json to give Claude hints.",
+  "style_notes": "Fast-paced performance cuts. Keep energy high.",
+  "caption_hint": "New music out now — link in bio",
+  "hashtag_hint": ["newmusic", "indieartist", "musicvideo", "behindthescenes"],
+  "music_mood": "energetic",
+  "max_duration": 30,
+  "platforms": ["tiktok", "instagram", "youtube"]
+}

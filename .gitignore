@@ -1,0 +1,32 @@
+# Runtime artifacts
+input/
+output/
+logs/
+.env
+*.mp4
+*.mov
+*.mp3
+*.wav
+*.m4a
+.done
+.error
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
