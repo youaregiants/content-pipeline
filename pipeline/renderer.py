@@ -185,7 +185,12 @@ def render(job_dir: Path, manifest: dict, out_path: Path) -> Path:
             continue
 
         t_start = clip_start_times[i]
-        t_end = t_start + clip_durations[i]
+        # For non-last clips, end the caption at the start of the next xfade so
+        # it doesn't bleed through the transition into the adjacent clip.
+        if i < len(clips) - 1:
+            t_end = clip_start_times[i + 1]
+        else:
+            t_end = t_start + clip_durations[i]
         position = clip.get("caption_position", "bottom")
 
         if position == "bottom":
@@ -233,7 +238,6 @@ def render(job_dir: Path, manifest: dict, out_path: Path) -> Path:
         # Trim audio to match video trim
         start = float(clips[i].get("trim_start", 0.0))
         end = float(clips[i].get("trim_end", 0.0))
-        duration = end - start
         f = (
             f"[{i}:a]"
             f"atrim=start={start}:end={end},"
@@ -245,13 +249,17 @@ def render(job_dir: Path, manifest: dict, out_path: Path) -> Path:
         audio_inputs.append(f"[aprep{i}]")
 
     if len(clips) > 1:
-        concat_n = len(clips)
-        audio_filter_parts.append(
-            f"{''.join(audio_inputs)}concat=n={concat_n}:v=0:a=1[araw]"
-        )
-        clip_audio_label = "araw"
+        # Chain acrossfade between each prepared audio track to match the video xfades.
+        prev_audio = "aprep0"
+        for i in range(1, len(clips)):
+            out_audio = f"acf{i}"
+            audio_filter_parts.append(
+                f"[{prev_audio}][aprep{i}]acrossfade=d={td}[{out_audio}]"
+            )
+            prev_audio = out_audio
+        clip_audio_label = prev_audio
     else:
-        clip_audio_label = audio_inputs[0].strip("[]")
+        clip_audio_label = "aprep0"
 
     total_duration = sum(clip_durations) - td * (len(clips) - 1)
 
