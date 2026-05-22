@@ -7,19 +7,18 @@ load_dotenv(Path(__file__).parent / ".env")
 # --- Paths ---
 ROOT = Path(__file__).parent
 INPUT_DIR = ROOT / "input"
-OUTPUT_DIR = ROOT / "output"
+EXPORT_DIR = ROOT / "export"
 LOGS_DIR = ROOT / "logs"
 ASSETS_DIR = ROOT / "assets"
 FONTS_DIR = ASSETS_DIR / "fonts"
 MUSIC_DIR = ASSETS_DIR / "music"
 OVERLAYS_DIR = ASSETS_DIR / "overlays"
 
-for _d in (INPUT_DIR, OUTPUT_DIR, LOGS_DIR):
+for _d in (INPUT_DIR, EXPORT_DIR, LOGS_DIR):
     _d.mkdir(exist_ok=True)
 
 # --- API Keys ---
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-AYRSHARE_API_KEY = os.environ.get("AYRSHARE_API_KEY", "")
 
 # --- Claude model ---
 CLAUDE_MODEL = "claude-opus-4-5"
@@ -49,18 +48,10 @@ MUSIC_VOLUME = 0.25   # relative to clip audio
 MUSIC_FADE_IN = 1.0
 MUSIC_FADE_OUT = 2.0
 
-# --- QA Server ---
-QA_HOST = "localhost"
-QA_PORT = 8765
-
-# --- Ayrshare scheduling ---
-AYRSHARE_BASE_URL = "https://app.ayrshare.com/api"
-PLATFORMS = ["tiktok", "instagram", "youtube"]  # must match Ayrshare platform names
-
-# Posting windows (local time, ET assumed)
-POSTING_WINDOWS = ["07:00", "12:00", "17:30", "20:00"]
-TIMEZONE = "America/New_York"
-SCHEDULE_DAYS = 90   # how many days forward to spread posts
+# --- Audio normalization (loudnorm EBU R128) ---
+LOUDNORM_TARGET_I = -16     # integrated loudness (LUFS)
+LOUDNORM_TARGET_TP = -1.5   # true peak (dBFS)
+LOUDNORM_TARGET_LRA = 11    # loudness range
 
 # --- Watcher ---
 WATCH_INTERVAL = 30  # seconds between input scans in continuous mode

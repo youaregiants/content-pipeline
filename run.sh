@@ -23,17 +23,9 @@ check_ffmpeg() {
 }
 
 check_env() {
-  local missing=0
   if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
     echo "WARNING: ANTHROPIC_API_KEY is not set"
-    missing=1
-  fi
-  if [ -z "${AYRSHARE_API_KEY:-}" ]; then
-    echo "WARNING: AYRSHARE_API_KEY is not set"
-    missing=1
-  fi
-  if [ "$missing" -eq 1 ]; then
-    echo "  → Copy .env.example to .env and fill in your keys."
+    echo "  → Copy .env.example to .env and add your key."
     echo ""
   fi
 }
@@ -56,28 +48,13 @@ case "$CMD" in
     python3 watcher.py --watch
     ;;
 
-  qa)
-    echo "Starting QA server at http://localhost:8765 ..."
-    python3 qa_server.py
-    ;;
-
-  schedule)
-    check_env
-    DRYRUN=""
-    if [ "${2:-}" = "--dry-run" ]; then
-      DRYRUN="--dry-run"
-    fi
-    echo "Running scheduler${DRYRUN:+ (dry-run)}..."
-    python3 scheduler.py $DRYRUN
-    ;;
-
   cron-install)
     CRON_CMD="0 2 * * * cd $SCRIPT_DIR && ./run.sh pipeline >> logs/cron.log 2>&1"
     (crontab -l 2>/dev/null | grep -v "content-pipeline"; echo "$CRON_CMD") | crontab -
     echo "✓ Cron job installed: pipeline runs nightly at 2am"
     echo "  Entry: $CRON_CMD"
     echo "  View with: crontab -l"
-    echo "  Remove with: crontab -e"
+    echo "  Remove with: ./run.sh cron-remove"
     ;;
 
   cron-remove)
@@ -90,20 +67,22 @@ case "$CMD" in
 Content Pipeline — run.sh
 
 Usage:
-  ./run.sh pipeline          Run the pipeline once (process all pending jobs)
-  ./run.sh watch             Continuous watch mode (scans every 30s)
-  ./run.sh qa                Start the QA review server (http://localhost:8765)
-  ./run.sh schedule          Schedule approved posts to Ayrshare
-  ./run.sh schedule --dry-run Preview schedule without posting
-  ./run.sh cron-install      Install nightly 2am cron job
-  ./run.sh cron-remove       Remove the cron job
+  ./run.sh pipeline       Process all pending jobs in input/ (single pass)
+  ./run.sh watch          Continuous mode — scans input/ every 30s
+  ./run.sh cron-install   Install nightly 2am cron job
+  ./run.sh cron-remove    Remove the cron job
 
 Workflow:
-  1. Drop a job folder into input/  (must contain .mp4 or .mov clips)
+  1. Drop a job folder into input/
+       input/my-post/clip1.mp4
+       input/my-post/clip2.mp4
+       input/my-post/template.json   ← optional hints for Claude
+
   2. ./run.sh pipeline
-  3. ./run.sh qa              → review and approve in browser
-  4. ./run.sh schedule --dry-run  → check schedule_summary.json
-  5. ./run.sh schedule            → post to TikTok / Instagram / YouTube
+
+  3. Find your output in export/my-post/
+       my-post_final.mp4    ← upload this
+       my-post_caption.txt  ← copy-paste into each platform
 EOF
     ;;
 esac

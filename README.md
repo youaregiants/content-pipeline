@@ -3,41 +3,54 @@
 ![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)
 ![FFmpeg required](https://img.shields.io/badge/ffmpeg-required-orange)
 ![Claude Vision](https://img.shields.io/badge/claude-opus--4--5-purple)
-![Ayrshare](https://img.shields.io/badge/scheduler-ayrshare-green)
 
-Overnight video editing + social scheduling pipeline for a music artist's content.
-Drop raw clips into a job folder → Claude Vision generates an edit manifest → FFmpeg renders the reel → approve in browser → batch-schedule to TikTok, Instagram, and YouTube Shorts via Ayrshare.
+Overnight AI video editing pipeline for a music artist's social media content.
+Drop raw clips into a job folder → Claude Vision analyzes them → FFmpeg renders a 9:16 reel → two files land in `export/`:
+
+```
+export/my-post/
+  my-post_final.mp4      ← upload to TikTok / Instagram / YouTube
+  my-post_caption.txt    ← copy-paste caption, hashtags, and platform tips
+```
 
 ---
 
 ## Quick Start
 
 ```bash
-# 1. Install dependencies
+# 1. Install Python dependencies
 pip install -r requirements.txt
+
+# 2. Install FFmpeg
 brew install ffmpeg          # macOS
 # sudo apt install ffmpeg    # Linux
 
-# 2. Configure
+# 3. Configure
 cp .env.example .env
-# edit .env — add ANTHROPIC_API_KEY and AYRSHARE_API_KEY
+# edit .env — add your ANTHROPIC_API_KEY
 
-# 3. Create a job folder
-mkdir input/my-first-reel
+# 4. Create a job folder
+mkdir -p input/my-first-reel
 cp /path/to/clip1.mp4 input/my-first-reel/
 cp /path/to/clip2.mp4 input/my-first-reel/
-# optionally copy assets/template.example.json → input/my-first-reel/template.json
+# optional: copy assets/template.example.json → input/my-first-reel/template.json
 
-# 4. Run the pipeline
+# 5. Run
 ./run.sh pipeline
 
-# 5. Review output
-./run.sh qa
-# open http://localhost:8765 — approve or reject
+# 6. Grab your files
+open export/my-first-reel/
+```
 
-# 6. Schedule (dry-run first)
-./run.sh schedule --dry-run   # inspect output/schedule_summary.json
-./run.sh schedule             # send to Ayrshare
+---
+
+## Commands
+
+```
+./run.sh pipeline       Process all pending jobs once
+./run.sh watch          Continuous mode — scans input/ every 30s
+./run.sh cron-install   Install nightly 2am cron job
+./run.sh cron-remove    Remove the cron job
 ```
 
 ---
@@ -46,21 +59,22 @@ cp /path/to/clip2.mp4 input/my-first-reel/
 
 ```
 content-pipeline/
-  config.py              All settings and env var loading
+  config.py              Paths, render settings, Claude model
   watcher.py             Orchestrator — dispatches job folders through pipeline
-  qa_server.py           Local browser QA UI (http://localhost:8765)
-  scheduler.py           Batch schedules approved posts to Ayrshare
+  run.sh                 CLI entrypoint
+  requirements.txt
+  .env.example
   pipeline/
-    analyzer.py          Claude Vision → manifest.json
+    analyzer.py          Claude Vision keyframe analysis → manifest.json
     renderer.py          manifest.json → FFmpeg filter graph → MP4
-    meta_writer.py       manifest → post_meta.json for QA/scheduling
+    meta_writer.py       manifest → caption.txt (caption, hashtags, platform tips)
   assets/
-    fonts/               Drop .ttf fonts here (Montserrat Bold recommended)
-    music/               Background music files (.mp3/.wav/.m4a)
-    overlays/            Logo/watermark images
-    template.example.json  Copy into job folders as template.json
+    fonts/               Drop .ttf files here (Montserrat Bold recommended)
+    music/               Background audio (.mp3 / .wav / .m4a)
+    overlays/            Logos / watermarks
+    template.example.json
   input/                 Job folders go here (gitignored)
-  output/                Rendered MP4s and meta JSONs (gitignored)
+  export/                Rendered MP4s + caption files (gitignored)
   logs/                  Watcher and cron logs (gitignored)
 ```
 
@@ -74,19 +88,7 @@ input/
     clip1.mp4
     clip2.mp4
     clip3.mp4
-    template.json   ← optional hints for Claude
-```
-
-Name the job folder whatever you want — it becomes the `job_id` in all metadata.
-
----
-
-## Automation
-
-Install a nightly 2am cron job:
-```bash
-./run.sh cron-install
-./run.sh cron-remove   # to undo
+    template.json        ← optional Claude hints (see assets/template.example.json)
 ```
 
 ---
@@ -96,25 +98,13 @@ Install a nightly 2am cron job:
 | Variable | Required | Description |
 |---|---|---|
 | `ANTHROPIC_API_KEY` | Yes | Anthropic API key |
-| `AYRSHARE_API_KEY` | Yes | Ayrshare Business plan API key |
-| `FFMPEG_BIN` | No | Path to ffmpeg binary (default: `ffmpeg`) |
-| `FFPROBE_BIN` | No | Path to ffprobe binary (default: `ffprobe`) |
+| `FFMPEG_BIN` | No | Path to ffmpeg (default: `ffmpeg`) |
+| `FFPROBE_BIN` | No | Path to ffprobe (default: `ffprobe`) |
 
 ---
 
 ## Known Gaps
 
-- No audio normalization before render (clips with mismatched levels will be uneven)
+- Audio normalization uses single-pass `loudnorm` (accurate enough; true two-pass requires a separate ffprobe analysis step)
 - YouTube Shorts thumbnail not auto-generated
 - No unit tests yet
-
----
-
-## Pushing to GitHub
-
-After cloning or init:
-```bash
-# On github.com: create a new repo (don't initialize with README)
-git remote add origin git@github.com:YOUR_USERNAME/content-pipeline.git
-git push -u origin main
-```

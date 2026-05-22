@@ -50,16 +50,18 @@ def process_job(job_dir: Path) -> bool:
             manifest = analyzer.analyze(job_dir)
 
             job_name = job_dir.name
-            out_path = config.OUTPUT_DIR / job_name / f"{job_name}.mp4"
+            export_job_dir = config.EXPORT_DIR / job_name
+            export_job_dir.mkdir(parents=True, exist_ok=True)
+            out_path = export_job_dir / f"{job_name}_final.mp4"
 
             log.info(f"  [attempt {attempt}] Rendering...")
             video_path = renderer.render(job_dir, manifest, out_path)
 
-            log.info(f"  [attempt {attempt}] Writing metadata...")
+            log.info(f"  [attempt {attempt}] Writing caption...")
             meta_writer.write(job_dir, manifest, video_path)
 
             (job_dir / DONE_MARKER).write_text("done")
-            log.info(f"✓ Job complete: {job_dir.name}")
+            log.info(f"✓ Done: export/{job_name}/")
             return True
 
         except Exception as e:

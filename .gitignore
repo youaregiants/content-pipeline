@@ -1,6 +1,6 @@
 # Runtime artifacts
 input/
-output/
+export/
 logs/
 .env
 *.mp4

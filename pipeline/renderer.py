@@ -242,7 +242,7 @@ def render(job_dir: Path, manifest: dict, out_path: Path) -> Path:
             f"[{i}:a]"
             f"atrim=start={start}:end={end},"
             f"asetpts=PTS-STARTPTS,"
-            f"volume=1.0"
+            f"loudnorm=I={config.LOUDNORM_TARGET_I}:TP={config.LOUDNORM_TARGET_TP}:LRA={config.LOUDNORM_TARGET_LRA}:linear=true"
             f"[aprep{i}]"
         )
         audio_filter_parts.append(f)

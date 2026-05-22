@@ -1,27 +1,56 @@
 """
-Writes post_meta.json from manifest — consumed by QA server and scheduler.
+Writes job_caption.txt from manifest — copy-paste ready for TikTok/Instagram/YouTube.
 """
 
-import json
 from pathlib import Path
 
 
 def write(job_dir: Path, manifest: dict, video_path: Path) -> Path:
-    meta = {
-        "job_id": job_dir.name,
-        "video_path": str(video_path),
-        "title": manifest.get("title", ""),
-        "caption": manifest.get("caption", ""),
-        "hashtags": manifest.get("hashtags", []),
-        "music_mood": manifest.get("music_mood", ""),
-        "notes": manifest.get("notes", ""),
-        "status": "pending",       # pending | approved | rejected | scheduled
-        "rejection_reason": "",
-        "scheduled_at": "",
-        "ayrshare_post_id": "",
-    }
+    job_name = job_dir.name
+    caption = manifest.get("caption", "")
+    hashtags = manifest.get("hashtags", [])
+    hashtag_str = " ".join(f"#{h.lstrip('#')}" for h in hashtags)
+    notes = manifest.get("notes", "")
+    title = manifest.get("title", job_name)
 
-    meta_path = job_dir / "post_meta.json"
-    meta_path.write_text(json.dumps(meta, indent=2))
-    print(f"  [meta_writer] Meta written → {meta_path}")
-    return meta_path
+    lines = [
+        f"TITLE: {title}",
+        "",
+        "─" * 50,
+        "CAPTION",
+        "─" * 50,
+        caption,
+        "",
+        "─" * 50,
+        "HASHTAGS",
+        "─" * 50,
+        hashtag_str,
+        "",
+    ]
+
+    if notes:
+        lines += [
+            "─" * 50,
+            "NOTES",
+            "─" * 50,
+            notes,
+            "",
+        ]
+
+    lines += [
+        "─" * 50,
+        "PLATFORM TIPS",
+        "─" * 50,
+        "TikTok     — paste caption + hashtags into description",
+        "Instagram  — paste caption into caption field, hashtags at the end or first comment",
+        "YouTube    — paste title into title field, caption into description, hashtags at the bottom",
+        "",
+        f"VIDEO: {video_path}",
+    ]
+
+    text = "\n".join(lines)
+
+    caption_path = video_path.parent / f"{job_name}_caption.txt"
+    caption_path.write_text(text)
+    print(f"  [meta_writer] Caption written → {caption_path}")
+    return caption_path
