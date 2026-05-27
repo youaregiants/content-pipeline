@@ -10,8 +10,11 @@ import logging
 import time
 from pathlib import Path
 
+import json
+
 import config
 from pipeline import analyzer, renderer, meta_writer
+from pipeline.formats import tutorial as tutorial_format
 
 logging.basicConfig(
     level=logging.INFO,
@@ -44,18 +47,31 @@ def pending_jobs() -> list[Path]:
 def process_job(job_dir: Path) -> bool:
     log.info(f"▶ Processing job: {job_dir.name}")
 
+    # Read template to determine format
+    template_path = job_dir / "template.json"
+    template = {}
+    if template_path.exists():
+        try:
+            template = json.loads(template_path.read_text())
+        except Exception:
+            pass
+    fmt = template.get("format", "generic")
+
     for attempt in range(1, MAX_RETRIES + 1):
         try:
-            log.info(f"  [attempt {attempt}] Analyzing clips...")
-            manifest = analyzer.analyze(job_dir)
-
             job_name = job_dir.name
             export_job_dir = config.EXPORT_DIR / job_name
             export_job_dir.mkdir(parents=True, exist_ok=True)
             out_path = export_job_dir / f"{job_name}_final.mp4"
 
-            log.info(f"  [attempt {attempt}] Rendering...")
-            video_path = renderer.render(job_dir, manifest, out_path)
+            if fmt == "tutorial":
+                log.info(f"  [attempt {attempt}] Format: tutorial")
+                video_path, manifest = tutorial_format.render(job_dir, template, out_path)
+            else:
+                log.info(f"  [attempt {attempt}] Format: generic — analyzing clips...")
+                manifest = analyzer.analyze(job_dir)
+                log.info(f"  [attempt {attempt}] Rendering...")
+                video_path = renderer.render(job_dir, manifest, out_path)
 
             log.info(f"  [attempt {attempt}] Writing caption...")
             meta_writer.write(job_dir, manifest, video_path)

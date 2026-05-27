@@ -1,0 +1,7 @@
+{
+  "_comment": "Tutorial format template. Copy into your job folder as template.json.",
+  "format": "tutorial",
+  "artist_name": "THEY.",
+  "caption_hint": "How I built this track layer by layer 🎹 New music dropping soon — follow for updates.",
+  "hashtag_hint": ["musicproduction", "ableton", "beatmaking", "behindthescenes", "newmusic", "indieartist", "studiolife"]
+}
