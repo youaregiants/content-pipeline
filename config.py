@@ -53,5 +53,3 @@ LOUDNORM_TARGET_I = -16     # integrated loudness (LUFS)
 LOUDNORM_TARGET_TP = -1.5   # true peak (dBFS)
 LOUDNORM_TARGET_LRA = 11    # loudness range
 
-# --- Watcher ---
-WATCH_INTERVAL = 30  # seconds between input scans in continuous mode

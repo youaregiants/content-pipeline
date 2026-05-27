@@ -1,16 +1,11 @@
 """
-Orchestrator — scans input/ for job folders, dispatches each through the pipeline.
-Usage:
-  python watcher.py          # process all pending jobs once
-  python watcher.py --watch  # continuous watch mode
+Orchestrator — scans input/ for job folders and dispatches each through the pipeline.
+Usage: python watcher.py
 """
 
-import argparse
-import logging
-import time
-from pathlib import Path
-
 import json
+import logging
+from pathlib import Path
 
 import config
 from pipeline import analyzer, renderer, meta_writer
@@ -47,7 +42,6 @@ def pending_jobs() -> list[Path]:
 def process_job(job_dir: Path) -> bool:
     log.info(f"▶ Processing job: {job_dir.name}")
 
-    # Read template to determine format
     template_path = job_dir / "template.json"
     template = {}
     if template_path.exists():
@@ -90,7 +84,7 @@ def process_job(job_dir: Path) -> bool:
     return False
 
 
-def run_once():
+def run():
     jobs = pending_jobs()
     if not jobs:
         log.info("No pending jobs found.")
@@ -100,19 +94,5 @@ def run_once():
         process_job(job)
 
 
-def run_watch():
-    log.info(f"Watch mode: scanning every {config.WATCH_INTERVAL}s. Ctrl-C to stop.")
-    while True:
-        run_once()
-        time.sleep(config.WATCH_INTERVAL)
-
-
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Content pipeline watcher")
-    parser.add_argument("--watch", action="store_true", help="Continuous watch mode")
-    args = parser.parse_args()
-
-    if args.watch:
-        run_watch()
-    else:
-        run_once()
+    run()
